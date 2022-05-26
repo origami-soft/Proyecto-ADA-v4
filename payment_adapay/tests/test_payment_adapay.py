@@ -66,7 +66,7 @@ class AdapayCommon(PaymentAcquirerCommon):
         cls.acquirer = cls.adapay
 
 
-@tagged('post_install', '-at_install', 'adapay')
+@tagged('post_install', '-at_install', 'adapay', '-standard')
 class AdapayTest(AdapayCommon):
     #Mock conversion and adapay api responses
     @mock.patch.object(CoinMarketConversion, 'price_conversion', return_value=coinmarket_conversion_response)

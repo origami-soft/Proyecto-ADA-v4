@@ -7,7 +7,7 @@ from odoo.addons.payment_adapay.connectors.conversion_providers.coinmarket impor
 from requests import Session
 
 
-@tagged('post_install', '-at_install', 'adapay')
+@tagged('post_install', '-at_install', 'adapay', '-standard')
 class CurrencyConversionCoinmarketTest(unittest.TestCase):
     def setUp(self):
         self.api_key = "API_KEY"

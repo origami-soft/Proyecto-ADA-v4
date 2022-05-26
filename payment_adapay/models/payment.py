@@ -144,12 +144,13 @@ class TransactionAdapay(models.Model):
         adapay_data = {key: value for key, value in data.items() if key.startswith("adapay_")}
         self.write(adapay_data)
         self.adapay_last_event = datetime.now()
-        for sale in self.sale_order_ids:
-            # TODO: Add 1 ADA -> currency value 
-            CONVERSION_MSG = Template(_("""Currency converted via $provider: $amount $currency -> 
-                                        $ada_amount ADA. Last updated: $last_updated"""))
-            sale.message_post(body=CONVERSION_MSG.safe_substitute(data))
-            PAYMENT_CREATED_MSG = Template(_("""AdaPay payment request created:<br>
+        try:
+            for sale in self.sale_order_ids:
+                # TODO: Add 1 ADA -> currency value 
+                CONVERSION_MSG = Template(_("""Currency converted via $provider: $amount $currency -> 
+                                            $ada_amount ADA. Last updated: $last_updated"""))
+                sale.message_post(body=CONVERSION_MSG.safe_substitute(data))
+                PAYMENT_CREATED_MSG = Template(_("""AdaPay payment request created:<br>
                 Payment reference: $reference
                 <ul>
                 <li>uuid: $adapay_uuid</li>
@@ -158,7 +159,9 @@ class TransactionAdapay(models.Model):
                 <li>address: $adapay_address</li>
                 </ul>
                 """))
-            sale.message_post(body=PAYMENT_CREATED_MSG.safe_substitute(adapay_data, reference=self.reference))
+                sale.message_post(body=PAYMENT_CREATED_MSG.safe_substitute(adapay_data, reference=self.reference))
+        except Exception as err:
+            _logger.warning("Unable to set the sale order messages %s", err)
         self._set_transaction_pending()
         return True
 
@@ -277,14 +280,17 @@ class TransactionAdapay(models.Model):
             $transactions_msg
             </ul>
             """))
-        for sale in self.sale_order_ids:
-            transactions_history = data.get("transactions")
-            transactions_msg = ""
-            if transactions_history:
-                transactions_msg = "<li>transactions</li>"
-                for transaction_data in transactions_history:
-                    transactions_msg = f"{transactions_msg}{PAYMENT_UPDATE_TRANSACTIONS_MSG.safe_substitute(transaction_data)}"
-            sale.message_post(body=PAYMENT_UPDATE_MSG.safe_substitute(data, transactions_msg=transactions_msg))
+        try:
+            for sale in self.sale_order_ids:
+                transactions_history = data.get("transactions")
+                transactions_msg = ""
+                if transactions_history:
+                    transactions_msg = "<li>transactions</li>"
+                    for transaction_data in transactions_history:
+                        transactions_msg = f"{transactions_msg}{PAYMENT_UPDATE_TRANSACTIONS_MSG.safe_substitute(transaction_data)}"
+                sale.message_post(body=PAYMENT_UPDATE_MSG.safe_substitute(data, transactions_msg=transactions_msg))
+        except Exception as err:
+            _logger.warning("Unable to set the sale order messages %s", err)
         if status == "confirmed":
             if self.state != "done":
                 self._set_transaction_done()
@@ -321,8 +327,11 @@ class TransactionAdapay(models.Model):
                     <li>updated: $updateTime</li>
                 </ul>
                 """))
-            for sale in self.sale_order_ids:
-                sale.message_post(body=TRANSACTION_UPDATE_MSG.safe_substitute(data))
+            try:
+                for sale in self.sale_order_ids:
+                    sale.message_post(body=TRANSACTION_UPDATE_MSG.safe_substitute(data))
+            except Exception as err:
+                _logger.warning("Unable to set the sale order messages %s", err)
         return True
 
     def _adapay_update_payment_schedule(self):

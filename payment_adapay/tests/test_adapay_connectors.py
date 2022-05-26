@@ -6,7 +6,7 @@ from odoo.addons.payment_adapay.connectors.adapay import get_adapay_api, AdaPayU
 from requests import Session
 
 
-@tagged('post_install', '-at_install', 'adapay')
+@tagged('post_install', '-at_install', 'adapay', '-standard')
 class AdapayConnectorTest(unittest.TestCase):
     def setUp(self):
         self.api_key = "API_KEY"
